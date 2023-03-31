@@ -1,5 +1,9 @@
 # synaps-resource-generator
 
+## Prerequisits
+- JDK 11
+- Maven 3.6.3
+
 ## Steps to build
 
 1. Checkout the `main` branch
