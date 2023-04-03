@@ -7,6 +7,7 @@ import org.apache.synapse.api.API;
 import org.apache.synapse.config.xml.rest.APIFactory;
 import org.wso2.carbon.rest.api.APIException;
 import org.wso2.carbon.rest.api.service.RestApiAdmin;
+import org.wso2.exception.ExecutorException;
 import org.wso2.executor.Executor;
 
 import java.io.FileInputStream;
@@ -17,43 +18,53 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OasGenerationExecutor implements Executor {
 
-    @Override
-    public void init() {
-        // TODO Auto-generated method stub
+    private static final Logger logger = Logger.getLogger(OasGenerationExecutor.class.getName());
+
+    private static final String OUTPUT = "output";
+    private static final String JSON = "json";
+    private boolean isOutputJson = false;
+
+    public OasGenerationExecutor(String[] args) {
+
+        init(args);
     }
 
     @Override
-    public void execute() {
+    public void init(String[] args) {
+
+        if (args.length < 2) {
+            return;
+        }
+        String outputArg = args[1];
+        String[] outArgSplit = outputArg.split("=");
+        if (outArgSplit.length < 2) {
+            return;
+        }
+        if (outArgSplit[0].equalsIgnoreCase(OUTPUT) && outArgSplit[1].equalsIgnoreCase(JSON)) {
+            isOutputJson = true;
+        }
+    }
+
+    @Override
+    public void execute() throws ExecutorException {
 
         Path selectedPath = null;
         try (Stream<Path> paths = Files.walk(Paths.get(""))) {
             List<Path> pathList = paths
                     .filter(Files::isRegularFile)
                     .filter(p -> p.toString().endsWith(".xml")).collect(Collectors.toList());
-            for (Path path : pathList) {
-                try (Stream<String> lines = Files.lines(path)) {
-                    Optional<String> pathWithStringOptional = lines.filter(line -> line.contains("<api"))
-                            .findFirst();
-                    if (pathWithStringOptional.isPresent()) {
-                        selectedPath = path;
-                        break;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            selectedPath = selectApiFilePath(pathList);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println(selectedPath);
         if (selectedPath == null) {
-            System.out.println("No API found");
-            return;
+            throw new ExecutorException("No API file found");
         }
 
         try (InputStream inputStream = new FileInputStream(selectedPath.toFile())) {
@@ -61,17 +72,37 @@ public class OasGenerationExecutor implements Executor {
             OMElement documentElement = builder.getDocumentElement();
             API api = APIFactory.createAPI(documentElement);
             RestApiAdmin restApiAdmin = new RestApiAdmin();
-            try {
-                String swagger = restApiAdmin.generateSwaggerFromSynapseAPIByFormat(api, false);
-                System.out.println(swagger);
-                //write to file
-                Files.write(Paths.get("swagger.json"), swagger.getBytes());
-
-            } catch (APIException e) {
-                throw new RuntimeException(e);
-            }
+            final String swagger = generateSwaggerFromApi(api, restApiAdmin);
+            //write to file
+            final String fileName = isOutputJson ? "swagger.json" : "swagger.yaml";
+            Files.write(Paths.get(fileName), swagger.getBytes());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ExecutorException("Error while reading API file", e);
+        }
+    }
+
+    private Path selectApiFilePath(List<Path> paths) throws ExecutorException {
+        for (Path path : paths) {
+            try (Stream<String> lines = Files.lines(path)) {
+                Optional<String> pathWithStringOptional = lines.filter(line -> line.contains("<api"))
+                        .findFirst();
+                if (pathWithStringOptional.isPresent()) {
+                    return path;
+                }
+            } catch (IOException e) {
+                throw new ExecutorException("Couldn't find an API file in the project", e);
+            }
+        }
+        return null;
+    }
+
+    private String generateSwaggerFromApi(API api, RestApiAdmin restApiAdmin) throws ExecutorException {
+        try {
+            String swagger = restApiAdmin.generateSwaggerFromSynapseAPIByFormat(api, isOutputJson);
+            logger.info(swagger);
+            return swagger;
+        } catch (APIException e) {
+            throw new ExecutorException("Error while generating swagger", e);
         }
     }
 

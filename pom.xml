@@ -73,7 +73,7 @@
                 <configuration>
                     <descriptors>
 <!--                        <descriptorRef>jar-with-dependencies</descriptorRef>-->
-                        <discriptor>src/main/assmbly/jar-with-deps-with-exclude.xml</discriptor>
+                        <discriptor>src/main/assembly/jar-with-deps-with-exclude.xml</discriptor>
                     </descriptors>
                     <archive>
                         <manifest>
