@@ -28,6 +28,130 @@
                     <groupId>org.apache.ws.commons.axiom</groupId>
                     <artifactId>axiom-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.mediation.dependency.mgt</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.integrator.core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.mediation.registry</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.mediation.ntask</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.task.services</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.inbound.endpoint</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.mediation</groupId>
+                    <artifactId>org.wso2.carbon.inbound.endpoint.persistence</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon</groupId>
+                    <artifactId>org.wso2.carbon.securevault</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon</groupId>
+                    <artifactId>org.wso2.carbon.application.deployer</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon</groupId>
+                    <artifactId>org.wso2.carbon.caching.core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.commons</groupId>
+                    <artifactId>org.wso2.carbon.event.core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.org.ops4j.pax.logging</groupId>
+                    <artifactId>pax-logging-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sandesha2</groupId>
+                    <artifactId>sandesha2-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.ws.security.wso2</groupId>
+                    <artifactId>wss4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr-runtime</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.platform</groupId>
+                    <artifactId>org.eclipse.osgi</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.eclipse.osgi</groupId>
+                    <artifactId>org.eclipse.osgi.services</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.eclipse.equinox</groupId>
+                    <artifactId>org.eclipse.equinox.http.helper</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.orbit.org.bouncycastle</groupId>
+                    <artifactId>bcprov-jdk15on</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon</groupId>
+                    <artifactId>javax.cache.wso2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon</groupId>
+                    <artifactId>org.wso2.carbon.user.core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.carbon.crypto</groupId>
+                    <artifactId>org.wso2.carbon.crypto.api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.orbit.commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.axis2.wso2</groupId>
+                    <artifactId>axis2</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.wso2.orbit.org.apache.neethi</groupId>
+                    <artifactId>neethi</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents.wso2</groupId>
+                    <artifactId>httpcore</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.tomcat</groupId>
+                    <artifactId>tomcat-catalina-ha</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>wsdl4j.wso2</groupId>
+                    <artifactId>wsdl4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.service.component.annotations</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.annotation</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.osgi</groupId>
+                    <artifactId>org.osgi.service.metatype.annotations</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
     </dependencies>
@@ -71,10 +195,12 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>
                 <configuration>
-                    <descriptors>
-<!--                        <descriptorRef>jar-with-dependencies</descriptorRef>-->
-                        <discriptor>src/main/assembly/jar-with-deps-with-exclude.xml</discriptor>
-                    </descriptors>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+<!--                    <descriptors>-->
+<!--                        <discriptor>src/main/assembly/jar-with-deps-with-exclude.xml</discriptor>-->
+<!--                    </descriptors>-->
                     <archive>
                         <manifest>
                             <mainClass>org.wso2.SynapsResourceGenerator</mainClass>
