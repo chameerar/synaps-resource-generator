@@ -89,6 +89,10 @@
                     <artifactId>antlr-runtime</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.ant.wso2</groupId>
+                    <artifactId>ant</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.eclipse.platform</groupId>
                     <artifactId>org.eclipse.osgi</artifactId>
                 </exclusion>
