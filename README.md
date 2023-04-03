@@ -20,5 +20,5 @@ mvn clean package
 java -jar synaps-resource-generator-1.0-SNAPSHOT-jar-with-dependencies.jar oas
 ```
 By default a yaml file will be generated. You can use the `output=json` option to generate the swagger file in json format.
-```
+
 3. Check the generated swagger file in the same directory
