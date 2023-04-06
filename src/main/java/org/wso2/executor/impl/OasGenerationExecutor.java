@@ -18,13 +18,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OasGenerationExecutor implements Executor {
-
-    private static final Logger logger = Logger.getLogger(OasGenerationExecutor.class.getName());
 
     private static final String OUTPUT = "output";
     private static final String JSON = "json";
@@ -76,6 +73,7 @@ public class OasGenerationExecutor implements Executor {
             //write to file
             final String fileName = isOutputJson ? "swagger.json" : "swagger.yaml";
             Files.write(Paths.get(fileName), swagger.getBytes());
+            System.out.printf("%s generated successfully", fileName);
         } catch (IOException e) {
             throw new ExecutorException("Error while reading API file", e);
         }
@@ -98,9 +96,7 @@ public class OasGenerationExecutor implements Executor {
 
     private String generateSwaggerFromApi(API api, RestApiAdmin restApiAdmin) throws ExecutorException {
         try {
-            String swagger = restApiAdmin.generateSwaggerFromSynapseAPIByFormat(api, isOutputJson);
-            logger.info(swagger);
-            return swagger;
+            return restApiAdmin.generateSwaggerFromSynapseAPIByFormat(api, isOutputJson);
         } catch (APIException e) {
             throw new ExecutorException("Error while generating swagger", e);
         }
