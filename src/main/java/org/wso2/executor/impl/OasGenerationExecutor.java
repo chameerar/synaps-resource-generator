@@ -19,15 +19,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class OasGenerationExecutor implements Executor {
 
-    private static final String OUTPUT = "output";
+    private static final String OUTPUT_FORMAT = "output-format";
     private static final String JSON = "json";
+    private static final String API_FILE = "api-file";
+    private static final String PROCESS_ONE_API = "process-one";
+
+    private static final String DEFAULT_SINGLE_SWAGGER_FILE_PREFIX = "default";
+
     private boolean isOutputJson = false;
+    private String apiFileName = null;
+    private boolean processOneApi = false;
 
     public OasGenerationExecutor(String[] args) {
 
@@ -40,28 +46,58 @@ public class OasGenerationExecutor implements Executor {
         if (args.length < 2) {
             return;
         }
-        String outputArg = args[1];
-        String[] outArgSplit = outputArg.split("=");
-        if (outArgSplit.length < 2) {
-            return;
-        }
-        if (outArgSplit[0].equalsIgnoreCase(OUTPUT) && outArgSplit[1].equalsIgnoreCase(JSON)) {
-            isOutputJson = true;
+        for (int i = 1; i < args.length; i++) {
+            String[] outArgSplit = args[i].split("=");
+            if (outArgSplit.length < 2) {
+                return;
+            }
+            String key = outArgSplit[0];
+            String value = outArgSplit[1];
+            if (key.equalsIgnoreCase(OUTPUT_FORMAT) && value.equalsIgnoreCase(JSON)) {
+                isOutputJson = true;
+                break;
+            }
+            if (key.equalsIgnoreCase(API_FILE)) {
+                apiFileName = value;
+                break;
+            }
+            if (key.equalsIgnoreCase(PROCESS_ONE_API) && value.equalsIgnoreCase(Boolean.TRUE.toString())) {
+                processOneApi = true;
+                break;
+            }
         }
     }
 
     @Override
     public void execute() throws ExecutorException {
 
+        List<Path> selectedPaths = getApiFilePaths();
+        if (selectedPaths.isEmpty()) {
+            throw new ExecutorException("No API file found");
+        }
+        for (Path path : selectedPaths) {
+            generateOasFile(path);
+        }
+    }
+
+    private List<Path> getApiFilePaths() throws ExecutorException {
+
         List<Path> selectedPaths = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(Paths.get(""))) {
-            for (Path path : paths.collect(Collectors.toList())) {
+            List<Path> pathsList = paths.collect(Collectors.toList());
+            if (apiFileName != null) {
+                return getApiFilePathForFileName(pathsList);
+            }
+            for (Path path : pathsList) {
                 if (Files.isRegularFile(path) && path.toString().endsWith(".xml")) {
                     try (BufferedReader reader = Files.newBufferedReader(path)) {
                         while (reader.ready()) {
                             String line = reader.readLine();
                             if (line.contains("<api")) {
                                 selectedPaths.add(path);
+                                if (processOneApi) {
+                                    return selectedPaths;
+                                }
                                 break;
                             }
                         }
@@ -71,12 +107,19 @@ public class OasGenerationExecutor implements Executor {
         } catch (IOException e) {
             throw new ExecutorException("Error while detecting the API file", e);
         }
-        if (selectedPaths.isEmpty()) {
-            throw new ExecutorException("No API file found");
+        return selectedPaths;
+    }
+
+    private List<Path> getApiFilePathForFileName(List<Path> pathsList) {
+
+        List<Path> selectedPaths = new ArrayList<>();
+        for (Path path : pathsList) {
+            if (Files.isRegularFile(path) && path.getFileName().toString().equals(apiFileName)) {
+                selectedPaths.add(path);
+                return selectedPaths;
+            }
         }
-        for (Path path : selectedPaths) {
-            generateOasFile(path);
-        }
+        return selectedPaths;
     }
 
     private void generateOasFile(Path selectedPath) throws ExecutorException {
@@ -88,8 +131,8 @@ public class OasGenerationExecutor implements Executor {
             RestApiAdmin restApiAdmin = new RestApiAdmin();
             final String swagger = generateSwaggerFromApi(api, restApiAdmin);
             //write to file
-            final String fileSuffix = isOutputJson ? "_swagger.json" : "_swagger.yaml";
-            final String fileName = api.getName() + fileSuffix;
+            final String fileSuffix = isOutputJson ? "-swagger.json" : "-swagger.yaml";
+            final String fileName = processOneApi ? DEFAULT_SINGLE_SWAGGER_FILE_PREFIX + fileSuffix : api.getName() + fileSuffix;
             Files.write(Paths.get(fileName), swagger.getBytes());
             System.out.printf("%s generated successfully", fileName);
         } catch (IOException e) {
