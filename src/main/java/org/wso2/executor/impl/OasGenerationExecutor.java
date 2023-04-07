@@ -10,12 +10,14 @@ import org.wso2.carbon.rest.api.service.RestApiAdmin;
 import org.wso2.exception.ExecutorException;
 import org.wso2.executor.Executor;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,18 +53,33 @@ public class OasGenerationExecutor implements Executor {
     @Override
     public void execute() throws ExecutorException {
 
-        Path selectedPath = null;
+        List<Path> selectedPaths = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(Paths.get(""))) {
-            List<Path> pathList = paths
-                    .filter(Files::isRegularFile)
-                    .filter(p -> p.toString().endsWith(".xml")).collect(Collectors.toList());
-            selectedPath = selectApiFilePath(pathList);
+            for (Path path : paths.collect(Collectors.toList())) {
+                if (Files.isRegularFile(path) && path.toString().endsWith(".xml")) {
+                    try (BufferedReader reader = Files.newBufferedReader(path)) {
+                        while (reader.ready()) {
+                            String line = reader.readLine();
+                            if (line.contains("<api")) {
+                                selectedPaths.add(path);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ExecutorException("Error while detecting the API file", e);
         }
-        if (selectedPath == null) {
+        if (selectedPaths.isEmpty()) {
             throw new ExecutorException("No API file found");
         }
+        for (Path path : selectedPaths) {
+            generateOasFile(path);
+        }
+    }
+
+    private void generateOasFile(Path selectedPath) throws ExecutorException {
 
         try (InputStream inputStream = new FileInputStream(selectedPath.toFile())) {
             OMXMLParserWrapper builder = OMXMLBuilderFactory.createOMBuilder(inputStream);
@@ -71,7 +88,8 @@ public class OasGenerationExecutor implements Executor {
             RestApiAdmin restApiAdmin = new RestApiAdmin();
             final String swagger = generateSwaggerFromApi(api, restApiAdmin);
             //write to file
-            final String fileName = isOutputJson ? "swagger.json" : "swagger.yaml";
+            final String fileSuffix = isOutputJson ? "_swagger.json" : "_swagger.yaml";
+            final String fileName = api.getName() + fileSuffix;
             Files.write(Paths.get(fileName), swagger.getBytes());
             System.out.printf("%s generated successfully", fileName);
         } catch (IOException e) {
@@ -79,22 +97,8 @@ public class OasGenerationExecutor implements Executor {
         }
     }
 
-    private Path selectApiFilePath(List<Path> paths) throws ExecutorException {
-        for (Path path : paths) {
-            try (Stream<String> lines = Files.lines(path)) {
-                Optional<String> pathWithStringOptional = lines.filter(line -> line.contains("<api"))
-                        .findFirst();
-                if (pathWithStringOptional.isPresent()) {
-                    return path;
-                }
-            } catch (IOException e) {
-                throw new ExecutorException("Couldn't find an API file in the project", e);
-            }
-        }
-        return null;
-    }
-
     private String generateSwaggerFromApi(API api, RestApiAdmin restApiAdmin) throws ExecutorException {
+
         try {
             return restApiAdmin.generateSwaggerFromSynapseAPIByFormat(api, isOutputJson);
         } catch (APIException e) {
