@@ -29,11 +29,14 @@ public class OasGenerationExecutor implements Executor {
     private static final String API_FILE = "api-file";
     private static final String PROCESS_ONE_API = "process-one";
 
+    private static final String OUTPUT_SWAGGER_FILE = "output-file";
+
     private static final String DEFAULT_SINGLE_SWAGGER_FILE_PREFIX = "default";
 
     private boolean isOutputJson = false;
     private String apiFileName = null;
     private boolean processOneApi = false;
+    private String outputSwaggerFileName = null;
 
     public OasGenerationExecutor(String[] args) {
 
@@ -63,6 +66,9 @@ public class OasGenerationExecutor implements Executor {
             }
             if (key.equalsIgnoreCase(PROCESS_ONE_API) && value.equalsIgnoreCase(Boolean.TRUE.toString())) {
                 processOneApi = true;
+            }
+            if (key.equalsIgnoreCase(OUTPUT_SWAGGER_FILE)) {
+                outputSwaggerFileName = value;
                 break;
             }
         }
@@ -134,7 +140,10 @@ public class OasGenerationExecutor implements Executor {
             final String swagger = generateSwaggerFromApi(api, restApiAdmin);
             //write to file
             final String fileSuffix = isOutputJson ? "-swagger.json" : "-swagger.yaml";
-            final String fileName = processOneApi ? DEFAULT_SINGLE_SWAGGER_FILE_PREFIX + fileSuffix : api.getName() + fileSuffix;
+            String fileName = api.getName() + fileSuffix;
+            if (processOneApi) {
+                fileName = outputSwaggerFileName != null ? outputSwaggerFileName : DEFAULT_SINGLE_SWAGGER_FILE_PREFIX + fileSuffix;
+            }
             Files.write(Paths.get(fileName), swagger.getBytes());
             System.out.printf("%s generated successfully", fileName);
         } catch (IOException e) {
