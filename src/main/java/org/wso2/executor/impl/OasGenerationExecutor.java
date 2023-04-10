@@ -85,6 +85,7 @@ public class OasGenerationExecutor implements Executor {
         List<Path> selectedPaths = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(Paths.get(""))) {
             List<Path> pathsList = paths.collect(Collectors.toList());
+            //If the api file name is given, get the file path for that file name
             if (apiFileName != null) {
                 return getApiFilePathForFileName(pathsList);
             }
@@ -95,6 +96,7 @@ public class OasGenerationExecutor implements Executor {
                             String line = reader.readLine();
                             if (line.contains("<api")) {
                                 selectedPaths.add(path);
+                                //If the process one api flag is set, return the selected paths with one path
                                 if (processOneApi) {
                                     return selectedPaths;
                                 }
