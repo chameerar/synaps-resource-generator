@@ -18,7 +18,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,29 +51,17 @@ public class OasGenerationExecutor implements Executor {
         if (args.length < 2) {
             return;
         }
+
+        Map<String, String> argsMap = new HashMap<>();
         for (int i = 1; i < args.length; i++) {
-            String[] outArgSplit = args[i].split("=");
-            if (outArgSplit.length < 2) {
-                return;
+            String[] argSplit = args[i].split("=");
+            if (argSplit.length < 2) {
+                continue;
             }
-            String key = outArgSplit[0];
-            String value = outArgSplit[1];
-            if (key.equalsIgnoreCase(OUTPUT_FORMAT) && value.equalsIgnoreCase(JSON)) {
-                isOutputJson = true;
-                break;
-            }
-            if (key.equalsIgnoreCase(API_FILE)) {
-                apiFileName = value;
-                break;
-            }
-            if (key.equalsIgnoreCase(PROCESS_ONE_API) && value.equalsIgnoreCase(Boolean.TRUE.toString())) {
-                processOneApi = true;
-            }
-            if (key.equalsIgnoreCase(OUTPUT_SWAGGER_FILE)) {
-                outputSwaggerFileName = value;
-                break;
-            }
+            argsMap.put(argSplit[0], argSplit[1]);
         }
+
+        mapConfigs(argsMap);
     }
 
     @Override
@@ -157,6 +147,21 @@ public class OasGenerationExecutor implements Executor {
             return restApiAdmin.generateSwaggerFromSynapseAPIByFormat(api, isOutputJson);
         } catch (APIException e) {
             throw new ExecutorException("Error while generating swagger", e);
+        }
+    }
+
+    private void mapConfigs(Map<String, String> argMap){
+        if (argMap.containsKey(OUTPUT_FORMAT) && argMap.get(OUTPUT_FORMAT).equalsIgnoreCase(JSON)) {
+            isOutputJson = true;
+        }
+        if (argMap.containsKey(API_FILE)) {
+            apiFileName = argMap.get(API_FILE);
+        }
+        if (argMap.containsKey(PROCESS_ONE_API) && argMap.get(PROCESS_ONE_API).equalsIgnoreCase(Boolean.TRUE.toString())) {
+            processOneApi = true;
+        }
+        if (argMap.containsKey(OUTPUT_SWAGGER_FILE)) {
+            outputSwaggerFileName = argMap.get(OUTPUT_SWAGGER_FILE);
         }
     }
 
